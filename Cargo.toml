@@ -4,3 +4,7 @@ version = "0.1.0"
 authors = ["tzaeru <tzaeru@gmail.com>"]
 
 [dependencies]
+libc = "0.2.33"
+ws2_32-sys = "0.2.1"
+winapi = "0.2.8"
+byteorder = "1.1.0"
