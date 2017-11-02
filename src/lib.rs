@@ -1,4 +1,5 @@
 mod native;
+mod sctp_in_rust;
 
 #[cfg(target_os = "windows")]
 use native::sctp_windows as sctp;
