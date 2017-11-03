@@ -94,27 +94,6 @@ impl MessageChunk {
     }
 }
 
-/*
-WIP, TEST CASE. Trying with Enums for now.
-
-/// Common trait for SCTP chunk types. https://en.wikipedia.org/wiki/SCTP_packet_structure#List_of_chunk_types
-trait MessageChunk {
-     fn serialize(&self) -> Vec<u8>;
-}
-
-/// Basic data payload type. https://en.wikipedia.org/wiki/SCTP_packet_structure#DATA_chunk
-pub struct DataChunk {
-
-}
-
-impl MessageChunk for DataChunk
-{
-    fn serialize(&self) -> Vec<u8>
-    {
-        Vec::new()
-    }
-}*/
-
 #[cfg(test)]
 mod tests {
     use super::*;

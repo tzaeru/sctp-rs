@@ -1,5 +1,6 @@
 mod native;
 mod sctp_in_rust;
+mod sockets_api;
 
 #[cfg(target_os = "windows")]
 use native::sctp_windows as sctp;
@@ -32,7 +33,7 @@ mod tests {
 
     #[test]
     fn it_works() {
-        open_and_bind_socket();
+        //open_and_bind_socket();
         //println!("Family address: {}", get_family_address_size(4));
     }
 }
