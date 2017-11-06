@@ -38,7 +38,7 @@ pub trait SocketsApi
     /// Connects a client
     fn connect(&self, addr: SocketAddr) -> Result<(), &'static str>;
     /// Accept an incoming connection.
-    fn accept(&self) -> Result<(), &'static str>;
+    fn accept(&self) -> Result<(), Error>;
     /// Send data over the socket.
     fn send(&self) -> Result<(), &'static str>;
     /// Receive data over the socket.

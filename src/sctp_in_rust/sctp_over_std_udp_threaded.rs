@@ -25,7 +25,6 @@ impl SctpOverUdpThreaded
             socket: socket,
         }
     }
-
 }
 
 impl sockets_api::SocketsApi for SctpOverUdpThreaded
@@ -55,11 +54,13 @@ impl sockets_api::SocketsApi for SctpOverUdpThreaded
         Ok(())
     }
     /// Accept an incoming connection.
-    fn accept(&self) -> Result<(), &'static str>
+    fn accept(&self) -> Result<(), Error>
     {
-        let mut buf = [0; 10];
+        let mut buf = [0; 200];
         let (amt, src) = self.socket.recv_from(&mut buf)?;
-        println!("{:?}", buf);
+        println!("Buf: {:?}\n", &buf[..]);
+        println!("Read: {}\n", amt);
+        println!("From: {:?}\n", src);
         Ok(())
     }
     /// Connects a client
@@ -100,20 +101,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn initialize() {
-        thread::spawn(move || {
-            // TODO
-            // Read messages in a loop to detect corrupted/missing messages.
-            let sctp_over_udp_server = SctpOverUdpThreaded::new(SocketAddr::new(IpAddr::V4(<Ipv4Addr>::new(127, 0, 0, 1)), 34254));
-            sctp_over_udp_server.listen();
-            //sctp_over_udp_server.set_nonblocking(true);
-            sctp_over_udp_server.accept();
-        });
+    fn test_server() {
+        let sctp_over_udp_server = SctpOverUdpThreaded::new(SocketAddr::new(IpAddr::V4(<Ipv4Addr>::new(127, 0, 0, 1)), 34254));
+        sctp_over_udp_server.listen();
+        //sctp_over_udp_server.set_nonblocking(true);
+        let result = sctp_over_udp_server.accept();
+        print!("Server result: {:?}\n", result);
+    }
 
-        thread::spawn(move || {
-            let sctp_over_udp_client = SctpOverUdpThreaded::new(SocketAddr::new(IpAddr::V4(<Ipv4Addr>::new(0, 0, 0, 0)), 0));
-            sctp_over_udp_client.connect(SocketAddr::new(IpAddr::V4(<Ipv4Addr>::new(127, 0, 0, 1)), 34254));
-        });
+    #[test]
+    fn test_client() {
+        let sctp_over_udp_client = SctpOverUdpThreaded::new(SocketAddr::new(IpAddr::V4(<Ipv4Addr>::new(0, 0, 0, 0)), 0));
+        let result = sctp_over_udp_client.connect(SocketAddr::new(IpAddr::V4(<Ipv4Addr>::new(127, 0, 0, 1)), 34254));
+        print!("Client result: {:?}\n", result);
     }
 
     #[test]
