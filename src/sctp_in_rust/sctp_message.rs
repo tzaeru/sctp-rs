@@ -1,4 +1,7 @@
+use bincode::{serialize, deserialize, Infinite};
+
 /// SCTP message, composite type made of header + N many data chunks + state data
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct Message {
     header: MessageHeader,
     chunks: Vec<MessageChunk>
@@ -11,10 +14,16 @@ impl Message {
             chunks: Vec::new()
         }
     }
+
+    pub fn add_chunk(&mut self, chunk: MessageChunk)
+    {
+        self.chunks.push(chunk);
+    }
 }
 
 /// SCTP message header. https://en.wikipedia.org/wiki/SCTP_packet_structure#Common_header
 /// Note: src_port and dst_port might not be necessary to serialize if UDP is used, as the UDP header replicates them.
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct MessageHeader {
     src_port: u16,
     dst_port: u16,
@@ -36,7 +45,7 @@ impl MessageHeader {
 }
 
 /// SCTP chunk types. https://en.wikipedia.org/wiki/SCTP_packet_structure#List_of_chunk_types
-/// Note: Length might not be necessary to serialize if UDP is used since the UDP header replicates it.
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct MessageChunk {
     chunk_type: u8,
     flags: u8,
@@ -45,6 +54,28 @@ pub struct MessageChunk {
     data: MessageChunkData
 }
 
+impl MessageChunk
+{
+    pub fn create_init_chunk() -> MessageChunk {
+        let chunk_data = MessageChunkData::Init {
+            init_tag: 0,
+            a_rwnd: 0,
+            out_streams_n: 0,
+            in_streams_n: 0,
+            init_tsn: 0
+        };
+
+        MessageChunk {
+            chunk_type: 0,
+            flags: 0,
+            length: 4 + 4 + 2 + 2 + 4,
+
+            data: chunk_data
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 enum MessageChunkData {
      Data {
          tsn: u32,
@@ -88,10 +119,7 @@ enum MessageChunkData {
 }
 
 impl MessageChunk {
-    pub fn serialize() -> Vec<u8>
-    {
-        Vec::new()
-    }
+
 }
 
 #[cfg(test)]
