@@ -70,7 +70,7 @@ impl sockets_api::SocketsApi for SctpOverUdpThreaded
         
         match message.chunks[0].data
         {
-            sctp_message::MessageChunkData::InitAck { init_tag, .. } => {
+            sctp_message::MessageChunkData::Init { init_tag, .. } => {
                 let mut init_ack_msg = sctp_message::Message::create_init_ack_msg(init_tag);
                 self.socket.send_to(&serialize(&init_ack_msg, Infinite).unwrap(), src);
             }
