@@ -3,8 +3,8 @@ use bincode::{serialize, deserialize, Infinite};
 /// SCTP message, composite type made of header + N many data chunks + state data
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct Message {
-    header: MessageHeader,
-    chunks: Vec<MessageChunk>
+    pub header: MessageHeader,
+    pub chunks: Vec<MessageChunk>
 }
 
 impl Message {
@@ -47,7 +47,7 @@ impl MessageHeader {
 /// SCTP chunk types. https://en.wikipedia.org/wiki/SCTP_packet_structure#List_of_chunk_types
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct MessageChunk {
-    chunk_type: u8,
+    pub chunk_type: u8,
     flags: u8,
     length: u16,
 
@@ -66,7 +66,7 @@ impl MessageChunk
         };
 
         MessageChunk {
-            chunk_type: 0,
+            chunk_type: 1,
             flags: 0,
             length: 4 + 4 + 2 + 2 + 4,
 

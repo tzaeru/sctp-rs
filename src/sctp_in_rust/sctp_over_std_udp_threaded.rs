@@ -61,6 +61,11 @@ impl sockets_api::SocketsApi for SctpOverUdpThreaded
         println!("Buf: {:?}\n", &buf[..]);
         println!("Read: {}\n", amt);
         println!("From: {:?}\n", src);
+
+        let message: sctp_message::Message = deserialize(&buf[..]).unwrap();
+        println!("Chunk amount: {:?}\n", message.chunks.len());
+        println!("Chunk 0 type: {:?}", message.chunks[0].chunk_type);
+
         Ok(())
     }
     /// Connects a client
