@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate serde_derive;
 extern crate bincode;
+extern crate rand;
 
 mod native;
 mod sctp_in_rust;

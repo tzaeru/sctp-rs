@@ -66,14 +66,23 @@ impl sockets_api::SocketsApi for SctpOverUdpThreaded
         println!("Chunk amount: {:?}\n", message.chunks.len());
         println!("Chunk 0 type: {:?}", message.chunks[0].chunk_type);
 
+        /// This is an init message, so answer with an InitAck right away
+        
+        match message.chunks[0].data
+        {
+            sctp_message::MessageChunkData::InitAck { init_tag, .. } => {
+                let mut init_ack_msg = sctp_message::Message::create_init_ack_msg(init_tag);
+                self.socket.send_to(&serialize(&init_ack_msg, Infinite).unwrap(), src);
+            }
+            _ => {}
+        }
+
         Ok(())
     }
     /// Connects a client
     fn connect(&self, addr: SocketAddr) -> Result<(), &'static str>
     {
-        let mut init_msg = sctp_message::Message::new();
-        let mut init_chunk = sctp_message::MessageChunk::create_init_chunk();
-        init_msg.add_chunk(init_chunk);
+        let mut init_msg = sctp_message::Message::create_init_msg();
         self.socket.send_to(&serialize(&init_msg, Infinite).unwrap(), addr);
         Ok(())
     }

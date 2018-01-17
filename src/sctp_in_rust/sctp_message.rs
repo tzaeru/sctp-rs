@@ -1,4 +1,6 @@
 use bincode::{serialize, deserialize, Infinite};
+use rand;
+use rand::Rng;
 
 /// SCTP message, composite type made of header + N many data chunks + state data
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -18,6 +20,58 @@ impl Message {
     pub fn add_chunk(&mut self, chunk: MessageChunk)
     {
         self.chunks.push(chunk);
+    }
+
+    pub fn create_init_msg() -> Message {
+        let mut rng = rand::thread_rng();
+
+        let chunk_data = MessageChunkData::Init {
+            init_tag: rng.gen::<u32>(),
+            a_rwnd: 0,
+            out_streams_n: 0,
+            in_streams_n: 0,
+            init_tsn: 0
+        };
+
+        let message_chunk = MessageChunk {
+            chunk_type: 1,
+            flags: 0,
+            length: 4 + 4 + 2 + 2 + 4,
+
+            data: chunk_data
+        };
+
+        let mut message = Message::new();
+        message.add_chunk(message_chunk);
+
+        message
+    }
+
+    pub fn create_init_ack_msg(verification: u32) -> Message {
+        let mut rng = rand::thread_rng();
+
+        let chunk_data = MessageChunkData::InitAck {
+            init_tag: rng.gen::<u32>(),
+            a_rwnd: 0,
+            out_streams_n: 0,
+            in_streams_n: 0,
+            init_tsn: 0,
+            state_cookie: Vec::new()
+        };
+
+        let message_chunk = MessageChunk {
+            chunk_type: 1,
+            flags: 0,
+            length: 4 + 4 + 2 + 2 + 4,
+
+            data: chunk_data
+        };
+
+        let mut message = Message::new();
+        message.add_chunk(message_chunk);
+        message.header.verification = verification;
+
+        message
     }
 }
 
@@ -51,32 +105,16 @@ pub struct MessageChunk {
     flags: u8,
     length: u16,
 
-    data: MessageChunkData
+    pub data: MessageChunkData
 }
 
 impl MessageChunk
 {
-    pub fn create_init_chunk() -> MessageChunk {
-        let chunk_data = MessageChunkData::Init {
-            init_tag: 0,
-            a_rwnd: 0,
-            out_streams_n: 0,
-            in_streams_n: 0,
-            init_tsn: 0
-        };
 
-        MessageChunk {
-            chunk_type: 1,
-            flags: 0,
-            length: 4 + 4 + 2 + 2 + 4,
-
-            data: chunk_data
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
-enum MessageChunkData {
+pub enum MessageChunkData {
      Data {
          tsn: u32,
          stream_id: u16,
