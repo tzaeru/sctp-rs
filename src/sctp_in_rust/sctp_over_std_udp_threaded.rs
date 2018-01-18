@@ -54,7 +54,7 @@ impl sockets_api::SocketsApi for SctpOverUdpThreaded
         Ok(())
     }
     /// Accept an incoming connection.
-    fn accept(&self) -> Result<(), Error>
+    fn accept(&mut self) -> Result<(), Error>
     {
         let mut buf = [0; 200];
         let (amt, src) = self.socket.recv_from(&mut buf)?;
@@ -89,12 +89,15 @@ impl sockets_api::SocketsApi for SctpOverUdpThreaded
             }
             _ => {}
         }
+        // Move to ESTABLISHED with cookie echo being received
+        self.sctp_conn.state = sctp_connection::SctpConnectionState::Established;
 
         Ok(())
     }
     /// Connects a client
     fn connect(&mut self, addr: SocketAddr) -> Result<(), Error>
     {
+        //TODO: We should initialize t1_init_timer in sctp_conn and start updating it.
         let mut init_msg = sctp_message::Message::create_init_msg();
         self.socket.send_to(&serialize(&init_msg, Infinite).unwrap(), addr);
         self.sctp_conn.state = sctp_connection::SctpConnectionState::CookieWait;
@@ -102,7 +105,6 @@ impl sockets_api::SocketsApi for SctpOverUdpThreaded
         let mut buf = [0; 200];
         let (amt, src) = self.socket.recv_from(&mut buf)?;
 
-        //TODO: We should initialize t1_init_timer in sctp_conn and start updating it.
         //This message should be init ack, so respond with cookie echo
         let message: sctp_message::Message = deserialize(&buf[..]).unwrap();
         println!("Chunk 0 type (should be init ack): {:?}", message.chunks[0].chunk_type);
@@ -115,11 +117,14 @@ impl sockets_api::SocketsApi for SctpOverUdpThreaded
             }
             _ => {}
         }
+        self.sctp_conn.state = sctp_connection::SctpConnectionState::CookieEchoed;
+
 
         //This sould be cookie ack, no need to respond anymore.
         let (amt, src) = self.socket.recv_from(&mut buf)?;
         let message: sctp_message::Message = deserialize(&buf[..]).unwrap();
         println!("Chunk 0 type (should be cookie ack): {:?}", message.chunks[0].chunk_type);
+        self.sctp_conn.state = sctp_connection::SctpConnectionState::Established;
 
 
         Ok(())
