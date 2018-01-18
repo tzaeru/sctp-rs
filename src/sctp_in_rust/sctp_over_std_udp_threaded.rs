@@ -38,7 +38,7 @@ impl sockets_api::SocketsApi for SctpOverUdpThreaded
     fn bind(&mut self, addr: SocketAddr) -> Result<(), Error>
     {
         self.socket = UdpSocket::bind(addr)?;
-
+        
         Ok(())
     }
     /// Starts to listen for connections. Will be unimplemented on the non-native, non-threaded API.
@@ -64,9 +64,9 @@ impl sockets_api::SocketsApi for SctpOverUdpThreaded
 
         let message: sctp_message::Message = deserialize(&buf[..]).unwrap();
         println!("Chunk amount: {:?}\n", message.chunks.len());
-        println!("Chunk 0 type: {:?}", message.chunks[0].chunk_type);
-
-        /// This is an init message, so answer with an InitAck right away
+        println!("Chunk 0 type (should be init): {:?}", message.chunks[0].chunk_type);
+ 
+        //This is an init message, so answer with an InitAck right away
         
         match message.chunks[0].data
         {
@@ -77,13 +77,51 @@ impl sockets_api::SocketsApi for SctpOverUdpThreaded
             _ => {}
         }
 
+        //This is cookie echo, so answer with cookie ack
+        let (amt, src) = self.socket.recv_from(&mut buf)?;
+        let message: sctp_message::Message = deserialize(&buf[..]).unwrap();
+        println!("Chunk 0 type (should be cookie echo): {:?}", message.chunks[0].chunk_type);
+        match message.chunks[0].data
+        {
+            sctp_message::MessageChunkData::CookieEcho {..} => {
+                let mut cookie_ack_msg = sctp_message::Message::create_cookie_ack_msg();
+                self.socket.send_to(&serialize(&cookie_ack_msg, Infinite).unwrap(), src);
+            }
+            _ => {}
+        }
+
         Ok(())
     }
     /// Connects a client
-    fn connect(&self, addr: SocketAddr) -> Result<(), &'static str>
+    fn connect(&mut self, addr: SocketAddr) -> Result<(), Error>
     {
         let mut init_msg = sctp_message::Message::create_init_msg();
         self.socket.send_to(&serialize(&init_msg, Infinite).unwrap(), addr);
+        self.sctp_conn.state = sctp_connection::SctpConnectionState::CookieWait;
+
+        let mut buf = [0; 200];
+        let (amt, src) = self.socket.recv_from(&mut buf)?;
+
+        //TODO: We should initialize t1_init_timer in sctp_conn and start updating it.
+        //This message should be init ack, so respond with cookie echo
+        let message: sctp_message::Message = deserialize(&buf[..]).unwrap();
+        println!("Chunk 0 type (should be init ack): {:?}", message.chunks[0].chunk_type);
+        //TODO: Stop the t1_init_timer.
+        match message.chunks[0].data
+        {
+            sctp_message::MessageChunkData::InitAck { ref state_cookie, .. } => {
+                let mut cookie_echo_msg = sctp_message::Message::create_cookie_echo_msg(state_cookie);
+                self.socket.send_to(&serialize(&cookie_echo_msg, Infinite).unwrap(), src);
+            }
+            _ => {}
+        }
+
+        //This sould be cookie ack, no need to respond anymore.
+        let (amt, src) = self.socket.recv_from(&mut buf)?;
+        let message: sctp_message::Message = deserialize(&buf[..]).unwrap();
+        println!("Chunk 0 type (should be cookie ack): {:?}", message.chunks[0].chunk_type);
+
+
         Ok(())
     }
     /// Send data over the socket.
@@ -125,7 +163,7 @@ mod tests {
 
     #[test]
     fn test_client() {
-        let sctp_over_udp_client = SctpOverUdpThreaded::new(SocketAddr::new(IpAddr::V4(<Ipv4Addr>::new(0, 0, 0, 0)), 0));
+        let mut sctp_over_udp_client = SctpOverUdpThreaded::new(SocketAddr::new(IpAddr::V4(<Ipv4Addr>::new(0, 0, 0, 0)), 0));
         let result = sctp_over_udp_client.connect(SocketAddr::new(IpAddr::V4(<Ipv4Addr>::new(127, 0, 0, 1)), 34254));
         print!("Client result: {:?}\n", result);
     }

@@ -36,7 +36,7 @@ pub trait SocketsApi
     /// On the native implentation, it will map to native listen() call.
     fn listen(&self) -> Result<(), &'static str>;
     /// Connects a client
-    fn connect(&self, addr: SocketAddr) -> Result<(), &'static str>;
+    fn connect(&mut self, addr: SocketAddr) -> Result<(), Error>;
     /// Accept an incoming connection.
     fn accept(&self) -> Result<(), Error>;
     /// Send data over the socket.

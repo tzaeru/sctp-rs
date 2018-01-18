@@ -34,7 +34,7 @@ impl Message {
         };
 
         let message_chunk = MessageChunk {
-            chunk_type: 1,
+            chunk_type: 0,
             flags: 0,
             length: 4 + 4 + 2 + 2 + 4,
 
@@ -73,6 +73,43 @@ impl Message {
 
         message
     }
+
+    pub fn create_cookie_echo_msg(state_cookie: &Vec<u8>) -> Message {
+        let chunk_data = MessageChunkData::CookieEcho {
+            state_cookie: state_cookie.to_vec()
+        };
+
+        let message_chunk = MessageChunk {
+            chunk_type: 2,
+            flags: 0,
+            length: 4 + 4 + 2 + 2 + 4,
+
+            data: chunk_data
+        };
+
+        let mut message = Message::new();
+        message.add_chunk(message_chunk);
+
+        message
+    }
+
+    pub fn create_cookie_ack_msg() -> Message {
+        let chunk_data = MessageChunkData::CookieAck {
+        };
+
+        let message_chunk = MessageChunk {
+            chunk_type: 3,
+            flags: 0,
+            length: 4 + 4 + 2 + 2 + 4,
+
+            data: chunk_data
+        };
+
+        let mut message = Message::new();
+        message.add_chunk(message_chunk);
+
+        message
+    }
 }
 
 /// SCTP message header. https://en.wikipedia.org/wiki/SCTP_packet_structure#Common_header
@@ -81,7 +118,6 @@ impl Message {
 pub struct MessageHeader {
     src_port: u16,
     dst_port: u16,
-
     verification: u32,
     checksum: u32
 }
